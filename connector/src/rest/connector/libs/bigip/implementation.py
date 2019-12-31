@@ -92,7 +92,7 @@ class Implementation(Implementation):
                 self.username,
                 self.password,
                 verify=self.verify,
-                token_to_use=self.token
+                token_to_use=self.token,
             )
             # Extending the timeout for the token received
             delete_icr_session.delete(delete_url)
@@ -103,25 +103,13 @@ class Implementation(Implementation):
 
             self._is_connected = False
 
-        log.info(
-            "'{t}' token deleted successfully.".format(t=self.token)
-        )
+        log.info("'{t}' token deleted successfully.".format(t=self.token))
 
     def isconnected(func):
 
-        '''Decorator to make sure session to device is active
+        """Decorator to make sure session to device is active
 
-
-
-           There is limitation on the amount of time the session ca be active
-
-           for on the NXOS devices. However, there are no way to verify if
-
-           session is still active unless sending a command. So, its just
-
-           faster to reconnect every time.
-
-         '''
+         """
 
         def decorated(self, *args, **kwargs):
 
@@ -147,7 +135,7 @@ class Implementation(Implementation):
 
         return decorated
 
-    def connect(self, auth_provider='tmos', verify=False, *args, **kwargs):
+    def connect(self, auth_provider="tmos", verify=False, *args, **kwargs):
 
         if self.connected:
             return
@@ -155,7 +143,9 @@ class Implementation(Implementation):
         self.username, self.password = get_username_password(self)
         self.ip = self.connection_info["ip"].exploded
         self.port = self.connection_info.get("port", "443")
-        self.base_url = "https://{ip}:{port}".format(ip=self.ip, port=self.port)
+        self.base_url = "https://{ip}:{port}".format(
+            ip=self.ip, port=self.port
+        )
         self.header = "Content-Type: application/json"
         self.verify = verify
 
@@ -164,15 +154,13 @@ class Implementation(Implementation):
             self.ip, self.port
         )
         payload = {
-            'username': self.username,
-            'password': self.password,
-            'loginProviderName': auth_provider
+            "username": self.username,
+            "password": self.password,
+            "loginProviderName": auth_provider,
         }
 
         iCRS = iControlRESTSession(
-            self.username,
-            self.password,
-            verify=self.verify
+            self.username, self.password, verify=self.verify
         )
 
         log.info(
@@ -180,15 +168,12 @@ class Implementation(Implementation):
             "'{a}'".format(d=self.device.name, a=self.alias)
         )
 
-        response = iCRS.post(
-            url,
-            json=payload,
-        )
+        response = iCRS.post(url, json=payload,)
 
         log.info(response.json())
 
         if response.status_code not in [200]:
-            if b'Configuration Utility restarting...' in response.content:
+            if b"Configuration Utility restarting..." in response.content:
                 time.sleep(30)
                 # self.retries += 1
                 return self.connect()
@@ -196,9 +181,11 @@ class Implementation(Implementation):
                 # self.retries = 0
                 return None, response.content
 
-        self.token = response.json()['token']['token']
+        self.token = response.json()["token"]["token"]
 
-        log.info("The following toke is used to connect'{t}'".format(t=self.token))
+        log.info(
+            "The following toke is used to connect'{t}'".format(t=self.token)
+        )
 
         # Self-link of the token
         timeout_url = "https://{0}:{1}/mgmt/shared/authz/tokens/{2}".format(
@@ -210,19 +197,23 @@ class Implementation(Implementation):
             self.username,
             self.password,
             verify=self.verify,
-            token_to_use=self.token
+            token_to_use=self.token,
         )
 
         # Extending the timeout for the token received
         token_icr_session.patch(timeout_url, json=timeout_payload)
 
-        log.info("'{t}' - Token timeout extended to '{time}'".format(t=self.token, time=timeout_payload))
+        log.info(
+            "'{t}' - Token timeout extended to '{time}'".format(
+                t=self.token, time=timeout_payload
+            )
+        )
 
         params = dict(
             username=self.username,
             password=self.password,
             verify=self.verify,
-            token_to_use=self.token
+            token_to_use=self.token,
         )
 
         # creating an object to be used all new requests
@@ -230,7 +221,11 @@ class Implementation(Implementation):
 
         self._is_connected = True
 
-        log.info("Connected successfully to '{d}' using token: '{t}'".format(d=self.device.name, t=self.token))
+        log.info(
+            "Connected successfully to '{d}' using token: '{t}'".format(
+                d=self.device.name, t=self.token
+            )
+        )
 
         return self._is_connected, self.icr_session
 
@@ -272,7 +267,9 @@ class Implementation(Implementation):
             "Successfully fetched data from '{d}'".format(d=self.device.name)
         )
 
-        log.info("Successfully fetched data using token: '{t}'".format(t=self.token))
+        log.info(
+            "Successfully fetched data using token: '{t}'".format(t=self.token)
+        )
 
         return output
 
@@ -298,7 +295,9 @@ class Implementation(Implementation):
             )
         )
 
-        response = self.icr_session.post(full_url, json=payload, timeout=timeout)
+        response = self.icr_session.post(
+            full_url, json=payload, timeout=timeout
+        )
 
         output = response
 
@@ -349,7 +348,9 @@ class Implementation(Implementation):
             )
         )
 
-        response = self.icr_session.put(full_url, json=payload, timeout=timeout)
+        response = self.icr_session.put(
+            full_url, json=payload, timeout=timeout
+        )
 
         output = response
 
@@ -400,7 +401,9 @@ class Implementation(Implementation):
             )
         )
 
-        response = self.icr_session.patch(full_url, json=payload, timeout=timeout)
+        response = self.icr_session.patch(
+            full_url, json=payload, timeout=timeout
+        )
 
         output = response
 
